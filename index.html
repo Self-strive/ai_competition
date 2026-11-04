@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 商品维度洞察引擎 · 待改进自动计算器</title>
+  <link rel="icon" href="assets/logo.png">
+  <link rel="stylesheet" href="assets/style.css?v=20261103a">
+</head>
+<body>
+  <!-- 置顶导航：首页 + 各批次结果页。position:fixed，下滑时始终固定在顶部 -->
+  <nav class="topnav" id="topNav">
+    <div class="topnav-inner">
+      <button class="nav-item nav-home" id="navHome">🏠 首页</button>
+      <div class="nav-tabs" id="navTabs"></div>
+      <button class="nav-theme" id="themeToggle" title="切换白天 / 夜间模式"><span class="ico">🌙</span><span class="lbl">夜间</span></button>
+      <button class="nav-theme" id="fxToggle" title="开启 / 关闭趣味动效（葡萄交互）"><span class="ico">🍇</span><span class="lbl">动效</span></button>
+      <button class="nav-theme" id="settingsBtn" title="设置 · 配置大模型 API（豆包 / 火山方舟）"><span class="ico">⚙</span><span class="lbl">设置</span></button>
+    </div>
+  </nav>
+  <div class="wrap">
+    <header class="top">
+      <div class="badge"><span class="dot"></span> AI · 营销传播赛道三 · 零成本可复算</div>
+      <h1 class="title">AI 商品维度洞察引擎</h1>
+      <div class="subtitle">输入商品评论 → 自动计算「最需要改进的维度」→ 饼图高亮 + 改进建议 + 真实评论证据</div>
+    </header>
+
+    <!-- 首页视图：统一输入 + 采集 + 分析区（两个原面板已合并为一个，避免重复输入与分析按钮） -->
+    <div id="homeView">
+    <section class="panel">
+      <div class="section-title">📝 评论输入与采集（粘贴 / 上传 / 截图 OCR，任一种方式均可）</div>
+      <div class="io-grid">
+        <div>
+          <textarea id="input" placeholder="在此粘贴商品评论，每行一条。例如：&#10;收到的葡萄很不新鲜，一半都坏了，太失望了&#10;物流太慢了，等了五天还没到&#10;客服态度差，售后推诿不肯赔&#10;&#10;也可以：① 点右侧「📂 上传评论 CSV / TXT」；② 点「📷 截图 OCR 识别」上传商品页截图；③ 直接 Ctrl+V 粘贴截图。下方列表会实时显示每条评论的情感标签。"></textarea>
+        </div>
+        <div class="side-tools">
+          <div class="field">
+            <label>商品名称（可选，用于标记这批评论）</label>
+            <input type="text" id="product" placeholder="如：山东阳光玫瑰葡萄">
+          </div>
+          <button class="btn" id="loadDemo">⚡ 载入示例评论</button>
+          <label class="btn" for="fileInput">📂 上传评论 CSV / TXT</label>
+          <input type="file" id="fileInput" accept=".csv,.txt" style="display:none">
+          <button class="btn btn-ocr" id="ocrBtn">📷 截图 OCR 识别（可多选）</button>
+          <input type="file" id="collectImage" accept="image/*" multiple style="display:none">
+          <div class="hint">CSV 自动识别含「评论/评价/review」的列；TXT 每行一条；截图 OCR 识别中文评论（联网或已配置离线引擎时可用）。全部在本地浏览器计算，数据不上传。</div>
+          <button class="btn btn-primary grape-submit" id="runBtn" title="点击摘葡萄，开始分析评论" aria-label="开始分析评论（葡萄提交按钮）">🚀 分析</button>
+          <div class="grape-hint" id="grapeHint"><span class="gh-ico">👆</span>点击葡萄开始分析</div>
+        </div>
+      </div>
+      <div class="scanner" id="scanner">
+        <span>AI 正在解析维度与情感…</span>
+        <div class="bar"><i></i></div>
+      </div>
+
+      <!-- 采集 / 解析结果预览：与上方输入框联动（粘贴、上传、OCR 结果都汇总到这里），情感标签由模型实时判定 -->
+      <div class="collector">
+        <div class="collect-preview-title">已解析 / 已识别结果（前 50 条，情感标签由模型实时判定）</div>
+        <div id="collectPreview" class="collect-preview"></div>
+        <div class="collect-btns" style="margin-top:8px">
+          <button class="btn" id="saveLocalBtn">💾 本地暂存</button>
+          <button class="btn" id="exportCsvBtn">⬇ 导出 CSV</button>
+          <button class="btn" id="exportTxtBtn">⬇ 导出 TXT</button>
+          <button class="btn" id="saveFolderBtn">📁 存到文件夹</button>
+          <button class="btn btn-soft" id="exportAllBtn">⬇ 导出全部已采集</button>
+          <button class="btn btn-soft" id="clearLocalBtn">🧹 一键清空（输入+暂存）</button>
+        </div>
+        <div id="ocrPreview" class="ocr-preview"></div>
+        <div class="hint" id="ocrStatus" style="margin-top:6px"></div>
+        <div class="hint" id="collectCount" style="margin-top:10px"></div>
+      </div>
+    </section>
+    </div><!-- /homeView -->
+
+    <!-- 结果页视图：每个批次的分析结果独立成页，从置顶导航进入 -->
+    <div id="resultView" style="display:none">
+      <div class="result-page-head" id="resultTitle"></div>
+    <!-- 结果区 -->
+    <section id="result">
+      <div class="res-actions">
+        <button class="btn btn-soft" id="shareBtn">🔗 分享结果</button>
+      </div>
+      <div class="verdict" id="verdict"></div>
+
+      <div class="res-grid">
+        <div class="panel">
+          <div class="section-title">维度改进分布（高亮=优先改）</div>
+          <div id="pieWrap"></div>
+        </div>
+        <div class="panel">
+          <div class="section-title">改进紧迫度排行</div>
+          <div class="rank-list" id="rankList"></div>
+        </div>
+      </div>
+
+      <div class="panel detail" id="detail">
+        <h3 id="detailTitle">维度详情</h3>
+        <div id="detailBody"></div>
+      </div>
+    </section>
+    </div><!-- /resultView -->
+
+    <footer class="foot">
+      本引擎默认由本地规则计算驱动（维度关键词 + 情感词表），<b>零 API 调用、可复算、结论可溯源到真实评论</b>；在右上角「⚙ 设置」中启用云端大模型（豆包 / 火山方舟）后，评论识别与图像识别可调用大模型以增强理解（按 token 计费）。<br>
+      维度体系以郭之昊等(2026)《农业工程学报》葡萄电商评论标注方案为依据 · 改进建议来自农产品改进知识库与冷链/分级国标。
+    </footer>
+  </div>
+
+  <!-- OCR 图片灯箱：点缩略图放大原图并核对识别结果 -->
+  <div class="lb-backdrop" id="imgLightbox" style="display:none">
+    <div class="lb-modal" role="dialog" aria-modal="true">
+      <div class="lb-head">
+        <span class="lb-title" id="lbTitle">截图预览</span>
+        <button class="lb-close" id="lbClose" title="关闭 (Esc)">×</button>
+      </div>
+      <div class="lb-body">
+        <div class="lb-img-wrap">
+          <img id="lbImg" alt="原图">
+        </div>
+        <div class="lb-text-wrap">
+          <div class="lb-text-label">本张识别文字（与上图逐条比对，确认是否识别完整）</div>
+          <div class="lb-text" id="lbText"></div>
+          <div class="lb-hint">提示：把左侧原图与右侧文字逐条对照，即可判断评论是否漏识别。</div>
+          <div class="lb-text-label" style="margin-top:10px">🖼️ 豆包图像识别（在「设置」中启用云端后可用）</div>
+          <div class="lb-vision" id="lbVision">（未启用云端或本张尚未识别）</div>
+        </div>
+      </div>
+      <div class="lb-foot">
+        <button class="lb-nav" id="lbPrev">‹ 上一张</button>
+        <span class="lb-counter" id="lbCounter"></span>
+        <button class="lb-nav" id="lbNext">下一张 ›</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 边框趣味动效层：日间葡萄雨 / 夜间流星，pointer-events:none，绝不遮挡输入框、结果区、按钮 -->
+  <div class="fx-border" id="fxBorder" aria-hidden="true"></div>
+  <!-- 飞行葡萄层：点击摘葡萄后，葡萄飞向结果区的临时载体 -->
+  <div class="fx-fly" id="fxFly" aria-hidden="true"></div>
+
+  <!-- 设置弹窗：配置云端大模型（豆包 / 火山方舟）API -->
+  <div class="modal-backdrop" id="settingsModal" style="display:none">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span>⚙ 设置 · 大模型 API 配置（豆包 / 火山方舟）</span>
+        <button class="modal-close" id="settingsClose" title="关闭 (Esc)">×</button>
+      </div>
+      <div class="modal-body">
+        <label class="sw"><input type="checkbox" id="setEnabled"> 启用云端大模型（用豆包增强评论识别 / 图像识别）</label>
+
+        <div class="set-field">
+          <label>API Key（仅本机保存，不会上传给我们）</label>
+          <div class="set-row">
+            <input type="password" id="setApiKey" placeholder="粘贴你的 ARK_API_KEY（形如 ark********）" autocomplete="off">
+            <button class="btn btn-soft" id="setShowKey" type="button">显示</button>
+          </div>
+          <div class="hint">在火山方舟控制台「API Key 管理」创建。密钥只存在你浏览器本地，调用时仅发往 127.0.0.1 本地代理与方舟官方接口，我们服务器不留存。</div>
+        </div>
+
+        <div class="set-field">
+          <label>文本模型（评论识别用）</label>
+          <select id="setTextModel">
+            <option value="doubao-seed-2-1-lite-260915">doubao-seed-2-1-lite-260915（推荐，便宜）</option>
+            <option value="doubao-seed-2-0-mini-260428">doubao-seed-2-0-mini-260428（多模态）</option>
+            <option value="doubao-seed-2-1-pro-260915">doubao-seed-2-1-pro-260915（更强）</option>
+            <option value="__custom__">自定义…</option>
+          </select>
+          <input type="text" id="setTextModelCustom" placeholder="填写模型 ID（须已在方舟开通）" style="display:none">
+        </div>
+
+        <div class="set-field">
+          <label>视觉模型（图像识别用）</label>
+          <select id="setVisionModel">
+            <option value="doubao-seed-2-1-lite-260915">doubao-seed-2-1-lite-260915（四模态·推荐）</option>
+            <option value="doubao-seed-1-6-vision-250815">doubao-seed-1-6-vision-250815（视觉深度思考）</option>
+            <option value="doubao-seed-2-0-pro-260215">doubao-seed-2-0-pro-260215</option>
+            <option value="__custom__">自定义…</option>
+          </select>
+          <input type="text" id="setVisionModelCustom" placeholder="填写模型 ID（须已在方舟开通）" style="display:none">
+        </div>
+
+        <div class="set-field">
+          <label>代理地址（一般留空；校园网/公司网需代理才能访问外网时填写）</label>
+          <input type="text" id="setProxy" placeholder="例如 http://127.0.0.1:7890（Clash 等代理端口；留空则自动读取系统代理）" autocomplete="off">
+          <div class="hint">若你上网必须开代理（如宿舍/校园网、或装了 Clash/梯子软件），请在此粘贴代理地址。软件里的本地服务器会经由它访问火山方舟。留空时也会尝试自动读取 Windows 系统代理。</div>
+        </div>
+
+        <div class="set-actions">
+          <button class="btn" id="setTest" type="button">🔌 连接测试</button>
+          <button class="btn btn-primary" id="setSave" type="button">保存</button>
+          <span id="setStatus" class="set-status"></span>
+        </div>
+        <div class="hint">未启用或未填 Key 时，软件照常用本地规则引擎（零成本、可复算）。启用后评论识别与图像识别将调用云端大模型，按 token 计费（见软件说明 / 下方对话）。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 轻提示 -->
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/data.js?v=20261103a"></script>
+  <script src="assets/sentiment_model.js?v=20261103a"></script>
+  <script src="assets/engine.js?v=20261103a"></script>
+  <script src="assets/chart.js?v=20261103a"></script>
+  <script src="assets/collector.js?v=20261103a"></script>
+  <script src="assets/settings.js?v=20261103a"></script>
+  <script src="assets/doubao_client.js?v=20261103a"></script>
+  <script src="assets/cloud_analyze.js?v=20261103a"></script>
+  <script src="assets/settings_ui.js?v=20261103a"></script>
+  <script src="assets/app.js?v=20261103a"></script>
+  <!-- GSAP 动画库：本地优先（离线桌面可跑），CDN 兜底；若两者皆无，grape.js 自动降级为 CSS 动画 + 直接提交 -->
+  <script src="assets/gsap.min.js?v=20261028b"></script>
+  <script>window.gsap||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"><\/script>');</script>
+  <script src="assets/grape.js?v=20261028b"></script>
+</body>
+</html>
