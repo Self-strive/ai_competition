@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 商品维度洞察引擎 · 待改进自动计算器</title>
   <link rel="icon" href="assets/logo.png">
-  <link rel="stylesheet" href="assets/style.css?v=20261108a">
+  <link rel="stylesheet" href="assets/style.css?v=20261108b">
 </head>
 <body>
   <!-- 置顶导航：首页 + 各批次结果页。position:fixed，下滑时始终固定在顶部 -->
@@ -79,7 +79,6 @@
     <section id="result">
       <div class="res-actions">
         <button class="btn btn-primary" id="exportReportBtn" title="生成一份自带饼图、紧迫度排行、真实评论证据与改进建议的独立 HTML 报告">⬇ 导出结果报告 HTML</button>
-        <button class="btn btn-soft" id="shareBtn" title="复制一句分享文案到剪贴板（不导出结果图表）">🔗 分享结果（复制文案）</button>
       </div>
       <div class="hint" style="margin:0 0 14px;line-height:1.6">
         导出的报告是<strong>独立 HTML 文件</strong>：可双击离线打开、直接发送或打印为 PDF；把它上传到 GitHub Pages 等静态托管后，即可作为<strong>网址</strong>分享给评委。
@@ -202,17 +201,17 @@
   <!-- 轻提示 -->
   <div class="toast" id="toast"></div>
 
-  <script src="assets/data.js?v=20261108a"></script>
-  <script src="assets/sentiment_model.js?v=20261108a"></script>
-  <script src="assets/engine.js?v=20261108a"></script>
-  <script src="assets/chart.js?v=20261108a"></script>
-  <script src="assets/collector.js?v=20261108a"></script>
-  <script src="assets/settings.js?v=20261108a"></script>
-  <script src="assets/doubao_client.js?v=20261108a"></script>
-  <script src="assets/cloud_analyze.js?v=20261108a"></script>
-  <script src="assets/settings_ui.js?v=20261108a"></script>
-  <script src="assets/report_export.js?v=20261108a"></script>
-  <script src="assets/app.js?v=20261108a"></script>
+  <script src="assets/data.js?v=20261108b"></script>
+  <script src="assets/sentiment_model.js?v=20261108b"></script>
+  <script src="assets/engine.js?v=20261108b"></script>
+  <script src="assets/chart.js?v=20261108b"></script>
+  <script src="assets/collector.js?v=20261108b"></script>
+  <script src="assets/settings.js?v=20261108b"></script>
+  <script src="assets/doubao_client.js?v=20261108b"></script>
+  <script src="assets/cloud_analyze.js?v=20261108b"></script>
+  <script src="assets/settings_ui.js?v=20261108b"></script>
+  <script src="assets/report_export.js?v=20261108b"></script>
+  <script src="assets/app.js?v=20261108b"></script>
   <!-- GSAP 动画库：本地优先（离线桌面可跑），CDN 兜底；若两者皆无，grape.js 自动降级为 CSS 动画 + 直接提交 -->
   <script src="assets/gsap.min.js?v=20261028b"></script>
   <script>window.gsap||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"><\/script>');</script>
