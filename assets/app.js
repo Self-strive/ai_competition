@@ -403,13 +403,34 @@
     productEl.value = "示例·山东阳光玫瑰葡萄";
   });
 
-  // 分享结果：调用系统分享 / 复制摘要，并触发一次边框葡萄雨 / 流星
+  // 导出结果报告 HTML：生成自包含静态报告（内联 SVG 饼图 + 排行 + 证据 + 建议）
+  // 产物可离线打开、直接发送、打印为 PDF，或上传到静态托管变成可分享网址
+  var exportReportBtn = $("exportReportBtn");
+  if (exportReportBtn) exportReportBtn.addEventListener("click", function () {
+    var b = activeBatch();
+    if (!b || !b.rows || !b.rows.length) {
+      window.toast && window.toast("请先生成分析结果，再导出报告", "err");
+      return;
+    }
+    if (!window.ReportExport) {
+      window.toast && window.toast("报告组件未加载：请确认 assets/report_export.js 存在", "err");
+      return;
+    }
+    try {
+      window.ReportExport.download(b);
+      window.toast && window.toast("✅ 结果报告 HTML 已下载，可直接打开或上传分享", "ok");
+    } catch (e) {
+      window.toast && window.toast("导出失败：" + (e && e.message ? e.message : "未知错误"), "err");
+    }
+  });
+
+  // 分享结果：调用系统分享 / 复制一句推广文案（注意：不导出结果图表），并触发一次边框葡萄雨 / 流星
   var shareBtn = $("shareBtn");
   if (shareBtn) shareBtn.addEventListener("click", function () {
     var b = activeBatch();
     var txt = "用「AI 商品维度洞察引擎」分析了" + (b ? "「" + b.name + "」" : "商品") + "的评论，自动算出了最该改进的维度～";
     if (navigator.share) { try { navigator.share({ title: "商品评论洞察", text: txt }); } catch (e) {} }
-    else if (navigator.clipboard && navigator.clipboard.writeText) { try { navigator.clipboard.writeText(txt); shareBtn.textContent = "✅ 已复制"; setTimeout(function () { shareBtn.textContent = "🔗 分享结果"; }, 1500); } catch (e) {} }
+    else if (navigator.clipboard && navigator.clipboard.writeText) { try { navigator.clipboard.writeText(txt); shareBtn.textContent = "✅ 已复制"; setTimeout(function () { shareBtn.textContent = "🔗 分享结果（复制文案）"; }, 1500); } catch (e) {} }
     if (window.GrapeFX && window.GrapeFX.ready) window.GrapeFX.borderBurst(lastSentiment, true);
   });
 

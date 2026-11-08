@@ -743,7 +743,7 @@ html[data-fx="off"] .grape-hand,
 html.reduced .grape-hand { opacity: 0 !important; }
 
 /* 结果页操作区（分享按钮） */
-.res-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+.res-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
 
 /* 移动端：缩小葡萄、关闭重阴影（性能） */
 @media (max-width: 760px) {
